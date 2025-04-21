@@ -9,5 +9,9 @@
 uint32_t matriz_rgb(double b, double r, double g);
 void limpar_todos_leds(PIO pio, uint sm);
 void acender_leds(PIO pio, uint sm, double g, double b, double r);
+void acender_borda_superior(PIO pio, uint sm, double g, double b, double r);
+void acender_borda_inferior(PIO pio, uint sm, double g, double b, double r);
+void acender_borda_esquerda(PIO pio, uint sm, double g, double b, double r);
+void acender_borda_direita(PIO pio, uint sm, double g, double b, double r);
 
 #endif // LED_MATRIZ_H

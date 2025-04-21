@@ -44,6 +44,13 @@ volatile bool ledg_state = false; // Indica estado atual do LED verde
 volatile bool botao_state = false; // Estado do botão do joystick
 
 void gpio_irq_handler(uint gpio, uint32_t events) {
+    // Variáveis referentes a matriz de LED's
+    PIO pio = pio0;
+    uint sm = 0;
+    uint offset = pio_add_program(pio, &pio_matriz_program);
+    pio_matriz_program_init(pio, sm, offset, pino_matriz);
+
+    
     if (gpio == BOTAO_B) {
         printf("Reiniciando a placa para modo de gravação...\n");
         reset_usb_boot(0, 0);
@@ -59,6 +66,7 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
             pwm_set_enabled(sliceB, pwm_function);
             pwm_set_enabled(sliceR, pwm_function);
             printf("ESTADO: %s\n", pwm_function ? "PWM ATIVADO" : "PWM DESATIVADO");
+            limpar_todos_leds(pio, sm);
         }
     }
 
@@ -74,6 +82,8 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
             CONTADOR = (CONTADOR + 1) % 3;
 
             printf("ESTADO: %s | BORDA: %d\n", ledg_state ? "LED VERDE ATIVADO" : "LED VERDE DESATIVADO", CONTADOR);
+
+            limpar_todos_leds(pio, sm);
         }
     }
 
@@ -145,6 +155,13 @@ void sirene(uint freq_grave, uint freq_agudo, uint duration) {
 
 
 int main(){
+
+    // Variáveis referentes a matriz de LED's
+    PIO pio = pio0;
+    uint sm = 0;
+    uint offset = pio_add_program(pio, &pio_matriz_program);
+    pio_matriz_program_init(pio, sm, offset, pino_matriz);
+
     stdio_init_all();
     setup_inicial();
 
@@ -161,5 +178,51 @@ int main(){
         uint posY = 52 - (joyY_valor * 48 / 4095); // Armazena o valor da pos. y
         ssd1306_rect(&ssd, posY, posX, 8, 8, cor, cor); // Atualiza com a nova pos.
         ssd1306_send_data(&ssd); // Atualiza o conteúdo do display
+
+        if (pwm_function) {
+            if (joyX_valor >= 1800 && joyX_valor <= 2300) { // Situação em que o quadrado está no centro
+                pwm_set_gpio_level(LED_R, 0);
+            } else if (joyX_valor > 2300) { // Situação em que o quadrado vai para direita
+                pwm_set_gpio_level(LED_R, joyX_valor - 2300);
+            } else if (joyX_valor < 1800) { // Situação em que o quadrado vai para esquerda
+                pwm_set_gpio_level(LED_R, 1800 - joyX_valor);
+            }
+
+            if (joyY_valor >= 1800 && joyY_valor <= 2300) { // Situação em que o quadrado está no centro
+                pwm_set_gpio_level(LED_B, 0);
+            } else if (joyY_valor > 2300) { // Situação em que o quadrado vai para baixo
+                pwm_set_gpio_level(LED_B, joyY_valor - 2300);
+            } else if (joyY_valor < 1800) { // Situação em que o quadrado vai para cima
+                pwm_set_gpio_level(LED_B, 1800 - joyY_valor);
+            }
+
+            if(joyX_valor > 2300)
+                acender_borda_direita(pio, sm, 0.1, 0.1, 0.0); 
+            else if(joyX_valor < 1800)
+                acender_borda_esquerda(pio, sm, 0.0, 0.0, 0.1); 
+            else if(joyY_valor > 2300)
+                acender_borda_superior(pio, sm, 0.1, 0.0, 0.0);
+            else if(joyY_valor < 1800)
+                acender_borda_inferior(pio, sm, 0.0, 0.1, 0.0);
+        }
+        else{
+            if(joyX_valor >= 4000) // Ativa o buzzer quando o joystick vai para a direita
+                sirene(700, 300, 1000);
+            else if (joyX_valor <= 20) // Ativa o buzzer quando o joystick vai para a esquerda
+                sirene(100, 30, 1000);
+            
+            if(joyY_valor >= 4000) // Ativa o buzzer quando o joystick vai para cima
+                sirene(10, 20, 1000);
+            else if (joyY_valor <= 20) // Ativa o buzzer quando o joystick vai para baixo
+                sirene(100, 2000, 100);
+        }
+
+        // Mostra informações do ADC no serial monitor
+        uint32_t current_time = to_ms_since_boot(get_absolute_time());
+        if ((current_time - last_print_time) >= 1000) {
+            printf("Posicao X: %d | Posicao Y: %d\n", posX, posY);
+            printf("VRX: %u | VRY: %u\n", joyX_valor, joyY_valor);
+            last_print_time = current_time;
+        }
     }
 }
