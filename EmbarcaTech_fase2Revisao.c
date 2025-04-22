@@ -82,8 +82,6 @@ void gpio_irq_handler(uint gpio, uint32_t events) {
             CONTADOR = (CONTADOR + 1) % 3;
 
             printf("ESTADO: %s | BORDA: %d\n", ledg_state ? "LED VERDE ATIVADO" : "LED VERDE DESATIVADO", CONTADOR);
-
-            limpar_todos_leds(pio, sm);
         }
     }
 
