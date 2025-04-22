@@ -196,14 +196,14 @@ int main(){
                 pwm_set_gpio_level(LED_B, 1800 - joyY_valor);
             }
 
-            if(joyX_valor > 2300)
-                acender_borda_direita(pio, sm, 0.1, 0.1, 0.0); 
-            else if(joyX_valor < 1800)
-                acender_borda_esquerda(pio, sm, 0.0, 0.0, 0.1); 
-            else if(joyY_valor > 2300)
-                acender_borda_superior(pio, sm, 0.1, 0.0, 0.0);
-            else if(joyY_valor < 1800)
-                acender_borda_inferior(pio, sm, 0.0, 0.1, 0.0);
+            if(joyX_valor > 2300) // Acende o a matriz de LED's quando o joystick vai para a direita
+                acender_leds(pio, sm, 0.1, 0.1, 0.1);
+            else if(joyX_valor < 1800)  // Acende o a matriz de LED's quando o joystick vai para a esquerda
+                acender_leds(pio, sm, 0.0, 0.1, 0.1); 
+            else if(joyY_valor > 2300)  // Acende o a matriz de LED's quando o joystick vai para cima
+                acender_leds(pio, sm, 0.1, 0, 0.1);
+            else if(joyY_valor < 1800)  // Acende o a matriz de LED's quando o joystick vai para baixo
+                acender_leds(pio, sm, 0.1, 0.1, 0);
         }
         else{
             if(joyX_valor >= 4000) // Ativa o buzzer quando o joystick vai para a direita
